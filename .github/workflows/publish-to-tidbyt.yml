@@ -1,5 +1,4 @@
 name: "Run Docker Container"
-description: "Docker Container to Publish Tidbyt"
 on:
   push:
     branches:
