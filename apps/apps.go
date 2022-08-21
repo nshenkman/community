@@ -153,6 +153,7 @@ import (
 	"tidbyt.dev/community/apps/warframecycles"
 	"tidbyt.dev/community/apps/weathermap"
 	"tidbyt.dev/community/apps/web3counter"
+	"tidbyt.dev/community/apps/whistle"
 	"tidbyt.dev/community/apps/whosthatpokemon"
 	"tidbyt.dev/community/apps/wordlebyt"
 	"tidbyt.dev/community/apps/wordoftheday"
@@ -299,6 +300,7 @@ func GetManifests() []manifest.Manifest {
 		tvquotes.New(),
 		twitch.New(),
 		twitterfollows.New(),
+		uber.New(),
 		unsplash.New(),
 		usgsearthquakes.New(),
 		usyieldcurve.New(),
@@ -308,6 +310,7 @@ func GetManifests() []manifest.Manifest {
 		warframecycles.New(),
 		weathermap.New(),
 		web3counter.New(),
+		whistle.New(),
 		whosthatpokemon.New(),
 		wordlebyt.New(),
 		wordoftheday.New(),
