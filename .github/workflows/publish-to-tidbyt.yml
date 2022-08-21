@@ -1,17 +1,8 @@
-name: Docker Image CI
-
+name: "Run Docker Container"
+description: "Docker Container to Publish Tidbyt"
 on:
   schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron:  '* 6-22 * * *'
-
-jobs:
-
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Build and run the Docker image
-      run: docker build . --tag pixlet:$(date +%s) && docker run pixlet:$(date +%s)
+    - cron: "* 6-22 * * *"
+runs:
+  using: "docker"
+  image: "Dockerfile"
