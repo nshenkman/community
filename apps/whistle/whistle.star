@@ -64,6 +64,8 @@ def main(config):
     width_complete = math.floor(percent_activity_complete * 30)
     if width_complete > 30:
         width_complete = 30
+
+    width_complete = 30
     width_left = 30 - width_complete
 
     animations = []
