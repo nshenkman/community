@@ -68,7 +68,6 @@ def main(config):
     if width_complete > 30:
         width_complete = 30
 
-    width_complete = 30
     width_left = 30 - width_complete
 
     animations = []
