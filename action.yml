@@ -20,8 +20,8 @@ runs:
   using: "docker"
   image: "Dockerfile"
   args:
-    - "TIDBYT_API_TOKEN=${{ inputs.TIDBYT_API_TOKEN }}"
-    - "TIDBYT_DEVICE_ID=${{ inputs.TIDBYT_DEVICE_ID }}"
-    - "WHISTLE_EMAIL=${{ inputs.WHISTLE_EMAIL }}"
-    - "WHISTLE_PASSWORD=${{ inputs.WHISTLE_PASSWORD }}"
-    - "WHISTLE_PET=${{ inputs.WHISTLE_PET }}"
+    - "-e TIDBYT_API_TOKEN=${{ inputs.TIDBYT_API_TOKEN }}"
+    - "-e TIDBYT_DEVICE_ID=${{ inputs.TIDBYT_DEVICE_ID }}"
+    - "-e WHISTLE_EMAIL=${{ inputs.WHISTLE_EMAIL }}"
+    - "-e WHISTLE_PASSWORD=${{ inputs.WHISTLE_PASSWORD }}"
+    - "-e WHISTLE_PET=${{ inputs.WHISTLE_PET }}"
