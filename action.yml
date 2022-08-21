@@ -1,0 +1,5 @@
+name: "publish-to-tidbyt"
+description: "Publish to tidbyt"
+runs:
+  using: "docker"
+  image: "Dockerfile"

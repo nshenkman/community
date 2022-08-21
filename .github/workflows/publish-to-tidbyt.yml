@@ -3,6 +3,15 @@ description: "Docker Container to Publish Tidbyt"
 on:
   schedule:
     - cron: "* 6-22 * * *"
-runs:
-  using: "docker"
-  image: "Dockerfile"
+jobs:
+  publish_to_tidbyt:
+    runs-on: ubuntu-latest
+    name: A Job to publish to tidbyt
+    steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: publish to tidbyt action step
+        uses: ./ # Uses an action in the root directory
+        id: publish-to-tidbyt
