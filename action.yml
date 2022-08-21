@@ -1,0 +1,27 @@
+name: "publish-to-tidbyt"
+description: "Publish to tidbyt"
+inputs:
+  TIDBYT_API_TOKEN:
+    description: "TIDBYT_API_TOKEN"
+    required: true
+  TIDBYT_DEVICE_ID:
+    description: "TIDBYT_DEVICE_ID"
+    required: true
+  WHISTLE_EMAIL:
+    description: "WHISTLE_EMAIL"
+    required: true
+  WHISTLE_PASSWORD:
+    description: "WHISTLE_PASSWORD"
+    required: true
+  WHISTLE_PET:
+    description: "WHISTLE_PET"
+    required: true
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - ${{ inputs.TIDBYT_API_TOKEN }}
+    - ${{ inputs.TIDBYT_DEVICE_ID }}
+    - ${{ inputs.WHISTLE_EMAIL }}
+    - ${{ inputs.WHISTLE_PASSWORD }}
+    - ${{ inputs.WHISTLE_PET }}

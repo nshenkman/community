@@ -1,0 +1,25 @@
+name: "Run Docker Container"
+on:
+  push:
+    branches:
+      - "*"
+  schedule:
+    - cron: "* 6-22 * * *"
+jobs:
+  publish_to_tidbyt:
+    runs-on: ubuntu-latest
+    name: A Job to publish to tidbyt
+    steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: publish to tidbyt action step
+        uses: ./ # Uses an action in the root directory
+        id: publish-to-tidbyt
+        with:
+          TIDBYT_API_TOKEN: ${{ secrets.TIDBYT_API_TOKEN }}
+          TIDBYT_DEVICE_ID: ${{ secrets.TIDBYT_DEVICE_ID }}
+          WHISTLE_EMAIL: ${{ secrets.WHISTLE_EMAIL }}
+          WHISTLE_PASSWORD: ${{ secrets.WHISTLE_PASSWORD }}
+          WHISTLE_PET: ${{ secrets.WHISTLE_PET }}
