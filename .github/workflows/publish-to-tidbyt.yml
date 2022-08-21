@@ -1,6 +1,9 @@
 name: "Run Docker Container"
 description: "Docker Container to Publish Tidbyt"
 on:
+  push:
+    branches:
+      - "*"
   schedule:
     - cron: "* 6-22 * * *"
 jobs:
