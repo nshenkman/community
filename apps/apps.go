@@ -300,7 +300,6 @@ func GetManifests() []manifest.Manifest {
 		tvquotes.New(),
 		twitch.New(),
 		twitterfollows.New(),
-		uber.New(),
 		unsplash.New(),
 		usgsearthquakes.New(),
 		usyieldcurve.New(),
