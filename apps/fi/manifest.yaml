@@ -1,0 +1,8 @@
+---
+id: fi
+name: Fi
+summary: Pet activity tracker (Fi)
+desc: Connects to Fi APIs to get latest daily data of your pet.
+author: nshenkman
+fileName: fi.star
+packageName: fi

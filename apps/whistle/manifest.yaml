@@ -1,0 +1,8 @@
+---
+id: whistle
+name: Whistle
+summary: Pet activity tracker (Whistle)
+desc: Connects to Whistle APIs to get latest daily data of your pet.
+author: nshenkman
+fileName: whistle.star
+packageName: whistle
