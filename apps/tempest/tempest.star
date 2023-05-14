@@ -1,8 +1,15 @@
+"""
+Applet: Tempest
+Summary: Display your Tempest Weather data
+Description: Overview of your Tempest Weather Station, including current temperature, wind chill, pressure, inches of rain, and wind.
+Author: epifinygirl
+"""
+
 load("encoding/base64.star", "base64")
 load("encoding/json.star", "json")
 load("http.star", "http")
 load("render.star", "render")
-load("time.star", "time")
+load("schema.star", "schema")
 load("secret.star", "secret")
 
 TEMPEST_AUTH_URL = "https://tempestwx.com/authorize.html"
@@ -52,8 +59,8 @@ def main(config):
                 "station_id": station_id,
                 "units_temp": units["units_temp"],
                 "units_wind": units["units_wind"],
-                "units_pressure": units["units_pressure"],
                 "units_distance": units["units_distance"],
+                "units_pressure": units["units_pressure"],
                 "units_precip": units["units_precip"],
             },
         )
@@ -66,11 +73,8 @@ def main(config):
     # If we can't get an observation, we should just skip it in the rotation.
     if len(station_res["obs"]) == 0:
         return []
-
+    feel_dew_choice = config.get("Feels_Dew", "1")
     conditions = forecast_res["current_conditions"]
-
-    timezone = station_res["timezone"]
-    now = time.now().in_location(timezone)
 
     temp = "%d°" % conditions["air_temperature"]
     humidity = "%d%%" % conditions["relative_humidity"]
@@ -80,32 +84,27 @@ def main(config):
         units["units_wind"],
     )
     pressure = "%g" % conditions["sea_level_pressure"]
-
-    icon = base64.decode(ICON_MAP.get(conditions["icon"], ICON_MAP["cloudy"]))
-
+    rain = "%g" % conditions["precip_accum_local_day"]
+    feels = "%d°" % conditions["feels_like"]
+    dew_pt = "%d°" % conditions["dew_point"]
     pressure_trend = conditions["pressure_trend"]
-    if pressure_trend == "falling":
-        pressure_icon = render.Row(
-            children = [
-                render.Image(base64.decode(ARROW_DOWN)),
-                render.Box(width = 1, height = 1),
-                render.Image(base64.decode(ARROW_DOWN)),
-                render.Box(width = 1, height = 1),
-                render.Image(base64.decode(ARROW_DOWN)),
-            ],
-        )
-    elif pressure_trend == "rising":
-        pressure_icon = render.Row(
-            children = [
-                render.Image(base64.decode(ARROW_UP)),
-                render.Box(width = 1, height = 1),
-                render.Image(base64.decode(ARROW_UP)),
-                render.Box(width = 1, height = 1),
-                render.Image(base64.decode(ARROW_UP)),
-            ],
-        )
+    icon = base64.decode(ICON_MAP.get(conditions["icon"], ICON_MAP["cloudy"]))
+    if feel_dew_choice == "1":
+        updated_temp = (feels)
+    elif feel_dew_choice == "2":
+        updated_temp = (dew_pt)
     else:
-        pressure_icon = render.Text("- - -")
+        updated_temp = (" ")
+
+    if pressure_trend == "falling":
+        pressure_icon = ("↓")
+
+    elif pressure_trend == "rising":
+        pressure_icon = ("↑")
+
+    else:
+        pressure_icon = ("→")
+    rain_units = units["units_precip"]
 
     return render.Root(
         delay = 500,
@@ -127,19 +126,31 @@ def main(config):
                                         color = "#2a2",
                                     ),
                                     render.Text(
-                                        content = humidity,
-                                        color = "#66f",
+                                        content = updated_temp,
+                                        color = "#FFFF00",
                                     ),
                                 ],
                             ),
                             render.Column(
-                                cross_align = "center",
+                                cross_align = "left",
                                 children = [
                                     render.Text(
-                                        content = pressure,
+                                        content = humidity,
+                                        color = "#66f",
                                     ),
-                                    pressure_icon,
+                                    render.Text(
+                                        content = rain + " " + rain_units,
+                                        color = "#808080",
+                                    ),
                                 ],
+                            ),
+                        ],
+                    ),
+                    render.Row(
+                        cross_align = "center",
+                        children = [
+                            render.Text(
+                                content = pressure + " " + pressure_icon,
                             ),
                         ],
                     ),
@@ -159,6 +170,20 @@ def main(config):
     )
 
 def get_schema():
+    options = [
+        schema.Option(
+            display = "Feels Like",
+            value = "1",
+        ),
+        schema.Option(
+            display = "Dew Point",
+            value = "2",
+        ),
+        schema.Option(
+            display = "None",
+            value = "3",
+        ),
+    ]
     return [
         {
             "id": "auth",
@@ -182,6 +207,13 @@ def get_schema():
                 "variable": "auth",
                 "value": "",
             },
+        },
+        {
+            "id": "Feels_Dew",
+            "name": "Feels Like or Dew Point Temperature",
+            "type": "dropdown",
+            "options": options,
+            "default": "1",
         },
     ]
 
@@ -358,6 +390,7 @@ SAMPLE_FORECAST_RESPONSE = """{
     "uv": 1,
     "brightness": 18230,
     "feels_like": 12,
+    "dew_point": 9,
     "lightning_strike_count_last_1hr": 0,
     "lightning_strike_count_last_3hr": 0,
     "precip_accum_local_day": 7.42,

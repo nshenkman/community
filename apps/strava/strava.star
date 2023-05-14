@@ -5,16 +5,16 @@ Description: Displays your YTD or all-time athlete stats recorded on Strava.
 Author: Rob Kimball
 """
 
-load("http.star", "http")
-load("math.star", "math")
-load("time.star", "time")
 load("cache.star", "cache")
+load("encoding/base64.star", "base64")
+load("encoding/json.star", "json")
+load("http.star", "http")
+load("humanize.star", "humanize")
+load("math.star", "math")
 load("render.star", "render")
 load("schema.star", "schema")
 load("secret.star", "secret")
-load("humanize.star", "humanize")
-load("encoding/json.star", "json")
-load("encoding/base64.star", "base64")
+load("time.star", "time")
 
 STRAVA_BASE = "https://www.strava.com/api/v3"
 CLIENT_ID = "79662"
@@ -23,7 +23,7 @@ DEFAULT_UNITS = "imperial"
 DEFAULT_SPORT = "ride"
 DEFAULT_SCREEN = "all"
 
-RATE_LIMIT_DEFAULT_BACKOFF = 10
+RATE_LIMIT_DEFAULT_BACKOFF_SECONDS = 15 * 60
 RATE_LIMIT_CACHE_KEY = "rate-limit-backoff"
 
 PREVIEW_DATA = {
@@ -632,14 +632,12 @@ def last_activity(config, refresh_token, sport, units):
     map_info = display_activity.get("map", {})
     polyline = map_info.get("summary_polyline", map_info.get("polyline", None))
     title = []
-    title_width = 64
     if show_logo:
         sport_icon = {
             "run": RUN_ICON,
             "ride": RIDE_ICON,
             "swim": SWIM_ICON,
         }[sport]
-        title_width -= 10
         title.append(
             render.Image(src = sport_icon),
         )
@@ -950,7 +948,6 @@ def get_activities(config, refresh_token):
     timezone = config.get("timezone") or "America/New_York"
     now = time.now().in_location(timezone)
     beg_curr_month = time.time(year = now.year, month = now.month, day = 1)
-    _next_month = time.time(year = now.year, month = now.month, day = 32)
 
     end_prev_month = beg_curr_month - time.parse_duration("1ns")
     beg_prev_month = time.time(year = end_prev_month.year, month = end_prev_month.month, day = 1)
@@ -1087,6 +1084,10 @@ def format_duration(d, resolution = "minutes"):
             m = "0" + m
         return "%s:%s" % (h, m)
 
+    else:
+        # Should never get here.
+        return ""
+
 def oauth_handler(params):
     params = json.decode(params)
     auth_code = params.get("code")
@@ -1173,7 +1174,7 @@ def http_get(url, headers = None):
         # Retry-After header. but if they start doing so, we'll respect it.
         # in the absence of that header, we backoff for some reasonable
         # default number of seconds.
-        backoff = res.headers.get("Retry-After", RATE_LIMIT_DEFAULT_BACKOFF)
+        backoff = res.headers.get("Retry-After", RATE_LIMIT_DEFAULT_BACKOFF_SECONDS)
         cache.set(
             RATE_LIMIT_CACHE_KEY,
             "back off, buddy",

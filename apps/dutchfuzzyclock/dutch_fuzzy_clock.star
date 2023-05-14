@@ -6,10 +6,10 @@ Author: Remy Blok
 """
 # Special thanks to Max Timkovich for the original English Fuzzy Clock
 
+load("encoding/json.star", "json")
 load("render.star", "render")
 load("schema.star", "schema")
 load("time.star", "time")
-load("encoding/json.star", "json")
 
 DEFAULT_LOCATION = {
     "lat": 52.4,
@@ -51,6 +51,7 @@ numbersPerLang = {
     },
 }
 numbersPerLang["en-GB"] = numbersPerLang["en-US"]
+numbersPerLang["nl-BE"] = numbersPerLang["nl-NL"]
 
 wordsPerLang = {
     "nl-NL": {
@@ -58,6 +59,12 @@ wordsPerLang = {
         "half": "HALF",
         "to": "VOOR",
         "past": "OVER",
+    },
+    "nl-BE": {
+        "hour": "UUR",
+        "half": "HALF",
+        "to": "VOOR",
+        "past": "NA",
     },
     "en-US": {
         "hour": "O'CLOCK",
@@ -100,6 +107,8 @@ def fuzzy_time(hours, minutes, language):
 
     # next 45 mins we already talk about the next hour
     hours += 1
+    if hours > 12:
+        hours -= 12
 
     if rounded < 30:
         return [numbers[30 - rounded], words["to"] + " " + words["half"], numbers[hours]]
@@ -141,6 +150,10 @@ def get_schema():
         schema.Option(
             display = "Dutch",
             value = "nl-NL",
+        ),
+        schema.Option(
+            display = "Dutch (Belgium)",
+            value = "nl-BE",
         ),
         schema.Option(
             display = "American English",
