@@ -16,6 +16,15 @@ inputs:
   WHISTLE_PET:
     description: "WHISTLE_PET"
     required: true
+  FI_EMAIL:
+    description: "FI_EMAIL"
+    required: true
+  FI_PASSWORD:
+    description: "FI_PASSWORD"
+    required: true
+  FI_PET:
+    description: "FI_PET"
+    required: true
 runs:
   using: "docker"
   image: "Dockerfile"
@@ -25,3 +34,6 @@ runs:
     - ${{ inputs.WHISTLE_EMAIL }}
     - ${{ inputs.WHISTLE_PASSWORD }}
     - ${{ inputs.WHISTLE_PET }}
+    - ${{ inputs.FI_EMAIL }}
+    - ${{ inputs.FI_PASSWORD }}
+    - ${{ inputs.FI_PET }}

@@ -20,3 +20,6 @@ jobs:
           WHISTLE_EMAIL: ${{ secrets.WHISTLE_EMAIL }}
           WHISTLE_PASSWORD: ${{ secrets.WHISTLE_PASSWORD }}
           WHISTLE_PET: ${{ secrets.WHISTLE_PET }}
+          FI_EMAIL: ${{ secrets.FI_EMAIL }}
+          FI_PASSWORD: ${{ secrets.FI_PASSWORD }}
+          FI_PET: ${{ secrets.FI_PET }}
