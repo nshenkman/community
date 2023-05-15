@@ -226,19 +226,6 @@ def main(config):
         ),
     )
 
-
-def wait(seconds, passed_time = None):
-    # print('waiting')
-    if passed_time:
-        duration = time.now() - passed_time
-        # print(duration)
-        if  duration.seconds >= seconds:
-            return
-        else:
-            wait(seconds, passed_time)
-    else:
-        wait(seconds, time.now())
-
 # buildifier: disable=function-docstring
 
 def fi_login(email, password):
@@ -260,15 +247,12 @@ def fi_login(email, password):
         ),
     )
 
-    print(res)
-    wait(0)
-
     if res.status_code >= 300:
         # buildifier: disable=print
         print("fi_auth_call failed: {} - {} ".format(res.status_code, res.body()))
         return None
 
-    session_id = res.json()["sessionId"]
+    session_id = res.headers['Set-Cookie'][11:43]
     cookie = res.headers["Set-Cookie"]
     cache.set("session_id", session_id)
     cache.set("cookie", cookie)
