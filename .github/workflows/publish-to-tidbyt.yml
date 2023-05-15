@@ -1,5 +1,6 @@
 name: "Run Docker Container"
 on:
+  push:
   schedule:
     - cron: "*/5 * * * *"
 jobs:
