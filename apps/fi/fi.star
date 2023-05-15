@@ -252,7 +252,7 @@ def fi_login(email, password):
         print("fi_auth_call failed: {} - {} ".format(res.status_code, res.body()))
         return None
 
-    session_id = res.headers['Set-Cookie'][11:43]
+    session_id = res.json()["sessionId"]
     cookie = res.headers["Set-Cookie"]
     cache.set("session_id", session_id)
     cache.set("cookie", cookie)
@@ -290,7 +290,6 @@ def fi_api_call(query, use_cache=True):
             # buildifier: disable=print
             print("fi_api_call failed: {} - {} ".format(res.status_code, res.body()))
             return None
-        print(res)
         cached_res = res.body()
         if use_cache:
             cache.set(cache_key, cached_res, DEFAULT_CACHE_TTL)
