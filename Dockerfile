@@ -7,7 +7,7 @@ ENV REPO=$GOPATH/src/github.com/tidbyt/pixlet
 RUN apt-get update \
  && apt-get install -y ca-certificates tzdata openssl libwebp-dev bash
 
-RUN git clone https://github.com/tidbyt/pixlet.git $REPO && cd $REPO && make build
+RUN git clone -b v0.22.8 https://github.com/tidbyt/pixlet.git $REPO && cd $REPO && make build
 
 COPY /apps/whistle/whistle.star /whistle.star
 COPY /apps/fi/fi.star /fi.star
