@@ -290,6 +290,7 @@ def fi_api_call(query, use_cache=True):
             # buildifier: disable=print
             print("fi_api_call failed: {} - {} ".format(res.status_code, res.body()))
             return None
+        print(res)
         cached_res = res.body()
         if use_cache:
             cache.set(cache_key, cached_res, DEFAULT_CACHE_TTL)
