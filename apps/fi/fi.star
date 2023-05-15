@@ -248,16 +248,17 @@ def fi_login(email, password):
         ),
     )
 
-    if res.status_code >= 300:
-        # buildifier: disable=print
-        print("fi_auth_call failed: {} - {} ".format(res.status_code, res.body()))
-        return None
-
-    print(res.body())
     session_id = res.json()["sessionId"]
     cookie = res.headers["Set-Cookie"]
     cache.set("session_id", session_id)
     cache.set("cookie", cookie)
+
+
+
+    if res.status_code >= 300:
+        # buildifier: disable=print
+        print("fi_auth_call failed: {} - {} ".format(res.status_code, res.body()))
+        return None
 
     return {
         "session_id": session_id,
