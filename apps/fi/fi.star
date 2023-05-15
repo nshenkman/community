@@ -242,7 +242,6 @@ def fi_login(email, password):
 
     res = http.post(
         FI_API + "/auth/login",
-        headers={'content-type': 'application/json'},
         json_body=dict(
             email=email,
             password=password,
