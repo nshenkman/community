@@ -77,6 +77,7 @@ def format_time(minutes):
 
 def main(config):
     populate_login_cache(config)
+    print(cache.get("email"))
     auth = fi_login(cache.get("email"), cache.get("password"))
 
     session_id = auth.get('session_id')
@@ -253,6 +254,7 @@ def fi_login(email, password):
         print("fi_auth_call failed: {} - {} ".format(res.status_code, res.body()))
         return None
 
+    print(res)
     session_id = res.json()["sessionId"]
     cookie = res.headers["Set-Cookie"]
     cache.set("session_id", session_id)
@@ -311,7 +313,6 @@ def fi_get_pets():
 def fi_pet_stats(pet_id):
     qString = QUERY_PET_ACTIVITY.replace(VAR_PET_ID, pet_id) + FRAGMENT_ACTIVITY_SUMMARY_DETAILS
     response = fi_api_call(qString)
-    print(response)
     return response['data']['pet']['dailyStat']
 
 
