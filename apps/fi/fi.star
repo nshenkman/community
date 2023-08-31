@@ -162,6 +162,8 @@ def main(config):
         ),
     )
 
+    print(pet_data)
+
     return render.Root(
         child=render.Column(
             children=[
@@ -177,7 +179,7 @@ def main(config):
                         ),
                         render.Text(
                             "{}%".format(
-                                pet_data["device"]['info']["batteryPercent"],
+                                pet_data.get("device", {}).get("info", {}).get("batteryPercent", 0),
                             ),
                         ),
                     ],
