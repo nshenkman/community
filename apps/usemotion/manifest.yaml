@@ -1,0 +1,8 @@
+---
+id: usemotion
+name: useMotion
+summary: useMotion task management app
+desc: Shows the next uncompleted task by due date.
+author: nshenkman
+fileName: usemotion.star
+packageName: usemotion

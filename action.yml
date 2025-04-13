@@ -25,6 +25,9 @@ inputs:
   FI_PET:
     description: "FI_PET"
     required: true
+  USEMOTION_URL_ENCODED_API_KEY:
+    description: "USEMOTION_URL_ENCODED_API_KEY"
+    required: true
 runs:
   using: "docker"
   image: "Dockerfile"
@@ -37,3 +40,4 @@ runs:
     - ${{ inputs.FI_EMAIL }}
     - ${{ inputs.FI_PASSWORD }}
     - ${{ inputs.FI_PET }}
+    - ${{ inputs.USEMOTION_URL_ENCODED_API_KEY }}

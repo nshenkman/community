@@ -24,3 +24,4 @@ jobs:
           FI_EMAIL: ${{ secrets.FI_EMAIL }}
           FI_PASSWORD: ${{ secrets.FI_PASSWORD }}
           FI_PET: ${{ secrets.FI_PET }}
+          USEMOTION_URL_ENCODED_API_KEY: ${{ secrets.USEMOTION_URL_ENCODED_API_KEY }}

@@ -11,6 +11,7 @@ RUN git clone -b v0.22.8 https://github.com/tidbyt/pixlet.git $REPO && cd $REPO 
 
 COPY /apps/whistle/whistle.star /whistle.star
 COPY /apps/fi/fi.star /fi.star
+COPY /apps/usemotion/usemotion.star /usemotion.star
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chown -R 1000:1000 /whistle.star
@@ -20,6 +21,10 @@ RUN chown -R 1000:1000 /whistle.webp
 RUN chown -R 1000:1000 /fi.star
 RUN touch /fi.webp
 RUN chown -R 1000:1000 /fi.webp
+
+RUN chown -R 1000:1000 /usemotion.star
+RUN touch /usemotion.webp
+RUN chown -R 1000:1000 /usemotion.webp
 
 USER 1000
 
