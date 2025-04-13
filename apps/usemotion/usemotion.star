@@ -80,7 +80,7 @@ def main(config):
             color="#FFA726" if due_date_time < time.now().in_location("America/Los_Angeles") else "#A5D6A7",
         )
 
-        print(scheduled_date)
+        print(scheduled_text)
     else:
         return render.Root(
             render.Row(
