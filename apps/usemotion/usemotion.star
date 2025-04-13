@@ -35,7 +35,6 @@ LABEL_COLOR_MAP = {
 def main(config):
     apiKey = humanize.url_decode(config.get("apiKey"))
 
-    print("api key length", len(apiKey))
     res = http.get("https://api.usemotion.com/v1/tasks", headers={
         "X-API-Key": apiKey
     })
@@ -80,6 +79,8 @@ def main(config):
             content=scheduled_text,
             color="#FFA726" if due_date_time < time.now().in_location("America/Los_Angeles") else "#A5D6A7",
         )
+
+        print(scheduled_date)
     else:
         return render.Root(
             render.Row(
