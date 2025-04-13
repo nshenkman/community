@@ -35,6 +35,7 @@ LABEL_COLOR_MAP = {
 def main(config):
     apiKey = humanize.url_decode(config.get("apiKey"))
 
+    print("api key length", len(apiKey))
     res = http.get("https://api.usemotion.com/v1/tasks", headers={
         "X-API-Key": apiKey
     })
