@@ -2,8 +2,6 @@ name: "Run Docker Container"
 on:
   workflow_dispatch:
   push:
-  schedule:
-    - cron: "*/5 * * * *"
 jobs:
   publish_to_tidbyt:
     runs-on: ubuntu-latest
