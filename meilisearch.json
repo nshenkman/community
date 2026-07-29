@@ -3,119 +3,7 @@
   "info": {
     "title": "Meilisearch Product Availability — Colombia Express",
     "version": "1.0",
-    "description": "Search API for product availability across Expressa Colombia stores. Backed by Meilisearch index `products-colombia`.\n\n## Recommended usage pattern\n\nSend two queries in a single `/multi-search` call:\n- **Query 0** — existence check: no store filter, finds all active matching products.\n- **Query 1** — availability check: adds
- a `stores_with_stock IN [...]` filter for the Express stores of the target city.\n\n### Decision logic on the response\n| Condition | Interpretation |\n|-----------|---------------|\n| City code not in the Express city map | City not covered |\n| `results[0].estimatedTotalHits == 0` | Product not found |\n| `results[0].estimatedTotalHits > 0` and `r
-esults[1].estimatedTotalHits == 0` | Product exists but no Express availability in that city |\n| `results[1].estimatedTotalHits > 0` | Product available in at least one store in the city |\n\n## Express city map (cityCode → store IDs)\n\n| City | Code | Store IDs |\n|------|------|-----------|\n| Cali | ALI | 91,92,93,94,1101,1107,1113,1137,1149,116
-9,1173 |\n| Jamundí | AMU | 1129 |\n| Armenia | ARM | 1159,1160 |\n| Barranquilla | BAR | 43,44,45,47,50,63,74,87,1102,1127,1147,1181 |\n| Bogotá | BOG | 2,3,4,6,7,9,11,14,15,16,19,20,22,23,24,26,27,29,30,31,37,39,40,41,42,46,53,54,60,67,68,80,81,83,85,88,89,99,1112,1115,1122,1135,1141,1154,1175,1190 |\n| Bucaramanga | BUC | 1130,1132,1133,1134 |\n|
-Chía | CHI | 28,1126 |\n| Cota | CTA | 1121 |\n| Cartagena | CTG | 64,71,72,1150,1188 |\n| Cúcuta | CUT | 1124,1128,1143,1146,1176,1186 |\n| Ibagué | IBA | 1177 |\n| Rionegro (Antioquia) | ION | 96,1148,1156 |\n| Cajicá | JIC | 1117 |\n| La Calera | LAC | 1118 |\n| Medellín | MED | 97,98,1100,1103,1106,1108,1109,1110,1114,1119,1131,1138,1155,1158,118
-4,1187 |\n| Sabaneta | NET | 1151,1189 |\n| Manizales | NIZ | 1162,1163,1164 |\n| Pereira | PER | 1161,1166,1168 |\n| Piedecuesta | PIE | 1165 |\n| Santa Marta | SMR | 62,76,1123 |\n| Soacha | SOA | 52 |\n| Soledad | SOL | 51 |\n| Los Patios | SPA | 1171 |\n| Montería | TER | 1125,1139,1172 |\n| Valledupar | VUP | 69,73,1140 |\n| Villavicencio | VVC
-| 1116 |"
-  },
-    ]
-  }Interpreting the response:
-
-  If the city doesn't appear in the map in point 4: city not covered.
-  results[0].estimatedTotalHits = 0: product not found.
-  results[0].estimatedTotalHits > 0 and results[1].estimatedTotalHits = 0: the product exists, but has no availability in the Express stores of that city. In this case, apply the treatment defined in the script, without directly stating "out of stock".
-  results[1].estimatedTotalHits > 0: product available in at least one store in the city.
-  mediaDescription: full name and presentation/format of the product.
-  id or objectID: product identifier.
-  fullPriceByCity: select the element whose cityCode matches the city's code and use fullPrice as the regular price.
-  stores_with_stock: IDs of the stores with availability.
-  stores_with_low_stock: lets you identify low availability in the stores queried.
-  stores_with_offer and offerPriceByCity: use the offer only when a queried store also appears in stores_with_offer. Then select offerPriceByCity according to the cityCode.
-  If several relevant presentations are found, we recommend the agent read out or confirm the presentation before communicating the price and availability.
-  3. Tests performed
-  We validated the calls using the same shared credential:
-
-  "dolex" in Bogotá: 15 active products found, with availability confirmed in the Express stores queried. Approximate search time: 3–4 ms.
-  "dolex" in Cajicá, store 1117: 16 matches with availability.
-  "ensure vainilla" in Villavicencio, store 1116: 15 matches with availability and price/offer data.
-  Non-existent product "xyzabc123 producto inexistente": 0 results.
-  We also confirmed that significant transcription errors can produce non-relevant results. For example, the search "doleks" did not correctly retrieve Dolex. For this reason, the documented MVP tradeoff stands, and the verification catalogue is proposed as a Phase 2 improvement.
-  4. Express city map and store IDs
-  The following map was validated against Colombia's active Express stores. The code also corresponds to the cityCode used in fullPriceByCity.
-  ALI - Cali: 91,92,93,94,1101,1107,1113,1137,1149,1169,1173
-  AMU - Jamundí: 1129
-  ARM - Armenia: 1159,1160
-  BAR - Barranquilla: 43,44,45,47,50,63,74,87,1102,1127,1147,1181
-  BOG - Bogotá: 2,3,4,6,7,9,11,14,15,16,19,20,22,23,24,26,27,29,30,31,37,39,40,41,42,46,53,54,60,67,68,80,81,83,85,88,89,99,1112,1115,1122,1135,1141,1154,1175,1190
-  BUC - Bucaramanga: 1130,1132,1133,1134
-  CHI - Chía: 28,1126
-  CTA - Cota: 1121
-  CTG - Cartagena: 64,71,72,1150,1188
-  CUT - Cúcuta: 1124,1128,1143,1146,1176,1186
-  IBA - Ibagué: 1177
-  ION - Rionegro (Antioquia): 96,1148,1156
-  JIC - Cajicá: 1117
-  LAC - La Calera: 1118
-  MED - Medellín: 97,98,1100,1103,1106,1108,1109,1110,1114,1119,1131,1138,1155,1158,1184,1187
-  NET - Sabaneta: 1151,1189
-  NIZ - Manizales: 1162,1163,1164
-  PER - Pereira: 1161,1166,1168
-  PIE - Piedecuesta: 1165
-  SMR - Santa Marta: 62,76,1123
-  SOA - Soacha: 52
-  SOL - Soledad: 51
-  SPA - Los Patios: 1171
-  TER - Montería: 1125,1139,1172
-  VUP - Valledupar: 69,73,1140
-  VVC - Villavicencio: 1116In total, 26 cities and 134 active Express stores.
-  5. MVP considerations
-
-  Meilisearch indicates the presence of stock through a store's membership in stores_with_stock, but does not return the exact number of units.
-  The city must be normalised to its corresponding code before building the store filter.
-  We recommend sending attributesToRetrieve to limit the size of the response.
-  The name dictated by the customer must be confirmed, as defined in the script, before running the query.
-  If the city doesn't appear in the map above, apply the flow for a non-covered city.
-  With this information you should be able to replace the pending placeholders for URL, authentication, and response fields in search_product_availability.
-  I'm on hand for any adjustments you need to the action format, or to coordinate a joint test of the configuration. Please let me know if you run into any issues or have questions about how it works.
-  Best regards,
-  Cristhian Cristhian Rodriguez — Backend Lead Mobile: +57 3017510346 — Bogotá D.C. | Colombia
-
-  One quick flag while you're reviewing: Patrick mentions getting a 400 on search_product_availability while the Bearer token returns 200. The most likely culprit givenhe request body, the /multi-search endpoint expects the top-level queries array exactly as shown, so a 400 usually points to a malformed payload or a filter fieldname mismatch rather than an auth problem. Worth checking that against the action config first.
-
-Let me probe the endpoint first to get the actual response structure before writing the spec.
-
-  Ran 1 shell command
-
-Good response. Let me also test the offer price structure and the zero-results case to complete the schema.
-
-  Ran 4 shell commands
-
-Now I have everything. Let me write the OpenAPI spec.
-
-⏺ Write(blueprints/tech-specifications/meilisearch-product-availability-openapi.yaml)
-User rejected write to blueprints/tech-specifications/meilisearch-product-availability-openapi.yaml
-openapi: 3.1.0
-info:
-  title: Meilisearch Product Availability — Colombia Express
-  version: "1.0"
-  description: |
-    Search API for product availability across Expressa Colombia stores.
-    Backed by Meilisearch index `products-colombia`.
-
-    ## Recommended usage pattern
-… +464 lines
-
-⏺ Write(blueprints/tech-specifications/meilisearch-product-availability-openapi.json)
-
-─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- Create file
- blueprints/tech-specifications/meilisearch-product-availability-openapi.json
-╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-{
-  "openapi": "3.1.0",
-  "info": {
-    "title": "Meilisearch Product Availability — Colombia Express",
-    "version": "1.0",
-    "description": "Search API for product availability across Expressa Colombia stores. Backed by Meilisearch index `products-colombia`.\n\n## Recommended usage pattern\n\nSend two queries in a single `/multi-search` call:\n- **Query 0** — existence check: no store filter, finds all active matching products.\n- **Query 1** — availability check: adds
- a `stores_with_stock IN [...]` filter for the Express stores of the target city.\n\n### Decision logic on the response\n| Condition | Interpretation |\n|-----------|---------------|\n| City code not in the Express city map | City not covered |\n| `results[0].estimatedTotalHits == 0` | Product not found |\n| `results[0].estimatedTotalHits > 0` and `r
-esults[1].estimatedTotalHits == 0` | Product exists but no Express availability in that city |\n| `results[1].estimatedTotalHits > 0` | Product available in at least one store in the city |\n\n## Express city map (cityCode → store IDs)\n\n| City | Code | Store IDs |\n|------|------|-----------|\n| Cali | ALI | 91,92,93,94,1101,1107,1113,1137,1149,116
-9,1173 |\n| Jamundí | AMU | 1129 |\n| Armenia | ARM | 1159,1160 |\n| Barranquilla | BAR | 43,44,45,47,50,63,74,87,1102,1127,1147,1181 |\n| Bogotá | BOG | 2,3,4,6,3,24,26,27,29,30,31,37,39,40,41,42,46,53,54,60,67,68,80,81,83,85,88,89,99,1112,1115,1122,1135,1141,1154,1175,1190 |\n| Bucaramanga | BUC | 1130,1132,1133,1134 |\n|
-Chía | CHI | 28,1126 |\n| Cota | CTA | 1121 |\n| Cartagena | CTG | 64,71,72,1150,1188 |\n| Cúcuta | CUT | 1124,1128,1143,1146,1176,1186 |\n| Ibagué | IBA | 1177 |\n| Rionegro (Antioquia) | ION | 96,1148,1156 |\n| Cajicá | JIC | 1117 |\n| La Calera | LAC | 1118 |\n| Medellín | MED | 97,98,1100,1103,1106,1108,1109,1110,1114,1119,1131,1138,1155,1158,118
-4,1187 |\n| Sabaneta | NET | 1151,1189 |\n| Manizales | NIZ | 1162,1163,1164 |\n| Pereira | PER | 1161,1166,1168 |\n| Piedecuesta | PIE | 1165 |\n| Santa Marta | SMR | 62,76,1123 |\n| Soacha | SOA | 52 |\n| Soledad | SOL | 51 |\n| Los Patios | SPA | 1171 |\n| Montería | TER | 1125,1139,1172 |\n| Valledupar | VUP | 69,73,1140 |\n| Villavicencio | VVC
-| 1116 |"
+    "description": "Search API for product availability across Expressa Colombia stores. Backed by Meilisearch index `products-colombia`.\n\n## Recommended usage pattern\n\nSend two queries in a single `/multi-search` call:\n- **Query 0** — existence check: no store filter, finds all active matching products.\n- **Query 1** — availability check: adds a `stores_with_stock IN [...]` filter for the Express stores of the target city.\n\n### Decision logic on the response\n| Condition | Interpretation |\n|-----------|---------------|\n| City code not in the Express city map | City not covered |\n| `results[0].estimatedTotalHits == 0` | Product not found |\n| `results[0].estimatedTotalHits > 0` and `results[1].estimatedTotalHits == 0` | Product exists but no Express availability in that city |\n| `results[1].estimatedTotalHits > 0` | Product available in at least one store in the city |\n\n## Express city map (cityCode → store IDs)\n\n| City | Code | Store IDs |\n|------|------|-----------|\n| Cali | ALI | 91,92,93,94,1101,1107,1113,1137,1149,1169,1173 |\n| Jamundí | AMU | 1129 |\n| Armenia | ARM | 1159,1160 |\n| Barranquilla | BAR | 43,44,45,47,50,63,74,87,1102,1127,1147,1181 |\n| Bogotá | BOG | 2,3,4,6,7,9,11,14,15,16,19,20,22,23,24,26,27,29,30,31,37,39,40,41,42,46,53,54,60,67,68,80,81,83,85,88,89,99,1112,1115,1122,1135,1141,1154,1175,1190 |\n| Bucaramanga | BUC | 1130,1132,1133,1134 |\n| Chía | CHI | 28,1126 |\n| Cota | CTA | 1121 |\n| Cartagena | CTG | 64,71,72,1150,1188 |\n| Cúcuta | CUT | 1124,1128,1143,1146,1176,1186 |\n| Ibagué | IBA | 1177 |\n| Rionegro (Antioquia) | ION | 96,1148,1156 |\n| Cajicá | JIC | 1117 |\n| La Calera | LAC | 1118 |\n| Medellín | MED | 97,98,1100,1103,1106,1108,1109,1110,1114,1119,1131,1138,1155,1158,1184,1187 |\n| Sabaneta | NET | 1151,1189 |\n| Manizales | NIZ | 1162,1163,1164 |\n| Pereira | PER | 1161,1166,1168 |\n| Piedecuesta | PIE | 1165 |\n| Santa Marta | SMR | 62,76,1123 |\n| Soacha | SOA | 52 |\n| Soledad | SOL | 51 |\n| Los Patios | SPA | 1171 |\n| Montería | TER | 1125,1139,1172 |\n| Valledupar | VUP | 69,73,1140 |\n| Villavicencio | VVC | 1116 |"
   },
   "servers": [
     {
@@ -133,7 +21,7 @@ Chía | CHI | 28,1126 |\n| Cota | CTA | 1121 |\n| Cartagena | CTG | 64,71,72,115
       "post": {
         "operationId": "multiSearch",
         "summary": "Search products across one or more queries in a single round-trip",
-        "description": "Executes multiple search queries against the `products-colombia` index in a single HTTP request. Use two queries — one without and one wit determine both product existence and Express availability simultaneously.",
+        "description": "Executes multiple search queries against the `products-colombia` index in a single HTTP request. Use two queries — one without and one with a city store filter — to determine both product existence and Express availability simultaneously.",
         "requestBody": {
           "required": true,
           "content": {
@@ -494,7 +382,7 @@ Chía | CHI | 28,1126 |\n| Cota | CTA | 1121 |\n| Cartagena | CTG | 64,71,72,115
           },
           "offerPriceByCity": {
             "type": "array",
-            "description": "Promotional price per city. Only apply when the queried store also appears in `stores_with_offer`. May be an empty array when no city-,
+            "description": "Promotional price per city. Only apply when the queried store also appears in `stores_with_offer`. May be an empty array when no city-level offer price is set.",
             "items": {
               "$ref": "#/components/schemas/CityOfferPrice"
             }
