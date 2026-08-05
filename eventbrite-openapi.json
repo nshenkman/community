@@ -1,0 +1,613 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Eventbrite Support Tools",
+    "version": "1.0",
+    "description": "REST routes backing the Eventbrite support-agent tool set — authenticated user/organization lookup, event search/detail, attendee lookup, order lookup, and venue/organizer detail. Converted from the tool catalog (`name`/`display_name`/`description`/`input_schema`/`rest_route`) used by the calling agent; each operation below corresponds 1:1 to one tool."
+  },
+  "servers": [
+    {
+      "url": "https://www.eventbriteapi.com",
+      "description": "Eventbrite API v3"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v3/users/me/": {
+      "get": {
+        "operationId": "get_authenticated_user",
+        "summary": "Get Authenticated User",
+        "description": "Use this at the start of an Eventbrite support call when the agent needs to confirm which Eventbrite account is connected before looking up events, attendees, or orders. Returns the authenticated user profile for the current integration; if no profile is returned or authorization fails, ask the caller to verify the connected Eventbrite account before continuing. Returns a single user object at most.",
+        "responses": {
+          "200": {
+            "description": "The authenticated user profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/users/me/organizations/": {
+      "get": {
+        "operationId": "list_my_organizations",
+        "summary": "List My Organizations",
+        "description": "Use this when the caller says they manage events under a business, organizer account, or organization and the agent needs the Eventbrite organization_id for later attendee, order, or event lookups. Returns a paginated list of organizations visible to the authenticated user; if the list is empty, tell the caller no organizations were found for the connected account and ask whether a different Eventbrite account should be connected. Return at most the first page unless the caller asks to continue.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite pagination page number to retrieve; start with 1 and only request later pages if the caller asks for more results.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of organizations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/organizations/{organization_id}/events/": {
+      "get": {
+        "operationId": "list_organization_events",
+        "summary": "List Organization Events",
+        "description": "Use this when the caller asks about upcoming, past, draft, live, or canceled events for a known Eventbrite organization. The optional status narrows results such as live or completed; if the caller gives a time phrase like “upcoming events,” use the closest status/time filter available and retry with a broader status if nothing is returned. Returns a paginated list of events for the organization; if no events are returned, say no matching events were found and ask whether to broaden the search.",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite organization ID whose events should be listed.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite pagination page number; start with 1 and fetch later pages only when needed.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated expansions to include related context such as venue, organizer, ticket_classes, or category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite event status filter such as live, started, ended, completed, canceled, draft, or all; use the caller’s wording when possible.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite sort order, for example start_asc or start_desc; use start_asc for upcoming events unless the caller asks otherwise.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of events for the organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/events/search/": {
+      "get": {
+        "operationId": "search_events",
+        "summary": "Search Events",
+        "description": "Use this when the caller asks to find public Eventbrite events by keyword, location, organizer, category, or date range and does not already know the event ID. Date parameters are absolute ISO-8601 timestamps; when the caller says “today,” “this weekend,” or “next month,” convert that phrase relative to the current date and the event location timezone, and if no results are returned retry with a wider date range or without the date filter. Returns a paginated list of matching events; if empty, explain that no matching public events were found and ask for another keyword, location, or broader time window.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Optional search keywords, event name, topic, or organizer name provided by the caller.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite pagination page number; start with 1 and only continue if the caller needs more options.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated expansions such as venue, organizer, ticket_availability, or category when those details are needed during the call.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categories",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated Eventbrite category IDs to filter by, if known.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location_within",
+            "in": "query",
+            "required": false,
+            "description": "Optional radius around the location, such as 10mi or 25km.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location_address",
+            "in": "query",
+            "required": false,
+            "description": "Optional human-readable city, region, postal code, or address to search near.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date_range_end",
+            "in": "query",
+            "required": false,
+            "description": "Optional ISO-8601 end timestamp for the end of the event start-date window, relative to the caller’s requested date range.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date_range_start",
+            "in": "query",
+            "required": false,
+            "description": "Optional ISO-8601 start timestamp for the beginning of the event start-date window, relative to the caller’s requested date range.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of matching events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/events/{event_id}/": {
+      "get": {
+        "operationId": "get_event",
+        "summary": "Get Event",
+        "description": "Use this when the caller provides or selects a specific Eventbrite event and the agent needs event details such as title, description, start/end time, status, venue, organizer, capacity, or ticket availability. Event times in the response are Eventbrite event timestamps; interpret them in the event timezone and, if a related expansion is missing, retry with expand set to include venue, organizer, or ticket_availability. Returns one event at most; if the event is not found, ask the caller to confirm the event link or ID.",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite event ID from the event URL, prior search result, attendee record, or order record.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated expansions to include related details such as venue, organizer, ticket_availability, ticket_classes, category, or format.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/events/{event_id}/attendees/": {
+      "get": {
+        "operationId": "list_event_attendees",
+        "summary": "List Event Attendees",
+        "description": "Use this during a call when the agent knows the Eventbrite event and needs to find attendees or registrations for that event, for example “is Jane on the guest list?” or “who registered recently?” The changed_since timestamp is relative to the Eventbrite attendee’s last-change time, not the call time; if a recent-change query returns nothing, retry without changed_since or ask for the attendee email/name. Returns a paginated list of attendees; if empty, say no attendees matched for that event and ask whether to check another event or spelling.",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite event ID whose attendee list should be read.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite pagination page number; start with 1 and continue only if more attendees are needed.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated expansions such as order, ticket_class, answers, or event when more context is needed.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Optional attendee status filter, such as attending or not_attending, if the caller specifies status.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "changed_since",
+            "in": "query",
+            "required": false,
+            "description": "Optional ISO-8601 timestamp; returns attendees changed since this exact time according to Eventbrite.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of attendees for the event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/organizations/{organization_id}/attendees/search/": {
+      "get": {
+        "operationId": "search_organization_attendees",
+        "summary": "Search Organization Attendees",
+        "description": "Use this as the primary caller-identification tool when the agent has an Eventbrite organization_id and the caller gives an attendee name, email address, or order number. This is useful for phrases like “look up my ticket,” “am I registered?”, “find this attendee,” or “check order 123.” Returns a paginated list of matching attendees within the organization; if empty, ask for another identifier such as exact email, order ID, event name, or date, and retry with broader query terms or without event_id.",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite organization ID to search within.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite pagination page number; start with 1 and continue only if more matches are needed.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "Required search text from the caller, such as attendee full name, email address, or Eventbrite order ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated expansions such as event, order, ticket_class, or answers to include call-relevant context.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "event_id",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite event ID to restrict the attendee search to one event when known.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of matching attendees within the organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/events/{event_id}/attendees/{attendee_id}/": {
+      "get": {
+        "operationId": "get_event_attendee",
+        "summary": "Get Event Attendee",
+        "description": "Use this when an attendee has already been identified and the agent needs exact registration details, check-in status, ticket class, answers, barcode context, or the related order during a support call. Returns one attendee at most; if the attendee is not found for the event, ask the caller to confirm the event and attendee details or search attendees again by email/order ID.",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite event ID that owns the attendee record.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attendee_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite attendee ID from an attendee search or event attendee list result.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated expansions such as order, event, ticket_class, or answers for more complete caller context.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested attendee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/events/{event_id}/orders/": {
+      "get": {
+        "operationId": "list_event_orders",
+        "summary": "List Event Orders",
+        "description": "Use this when the caller asks about purchases or orders for a known Eventbrite event and the agent needs to browse recent orders, reconcile registrations, or find an order by context. The changed_since timestamp is relative to the Eventbrite order’s last-change time; if a recent-order query returns nothing, retry without changed_since or use attendee search with the caller’s email/order number. Returns a paginated list of orders; if empty, explain that no matching orders were found for that event.",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite event ID whose orders should be listed.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Optional Eventbrite pagination page number; start with 1 and continue only if more orders are needed.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated expansions such as attendees, event, ticket_class, or answers to include related order details.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "changed_since",
+            "in": "query",
+            "required": false,
+            "description": "Optional ISO-8601 timestamp; returns orders changed since this exact time according to Eventbrite.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of orders for the event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/orders/{order_id}/": {
+      "get": {
+        "operationId": "get_order",
+        "summary": "Get Order",
+        "description": "Use this when the caller provides an Eventbrite order ID or an attendee search result references an order and the agent needs purchase, buyer, attendee, refund, or payment-related context. Returns one order at most; if the order is not found, ask the caller to confirm the order number or search by attendee email/name instead.",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite order ID from the caller, attendee record, email receipt, or search result.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated expansions such as attendees, event, ticket_class, or answers when those details are needed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/venues/{venue_id}/": {
+      "get": {
+        "operationId": "get_venue",
+        "summary": "Get Venue",
+        "description": "Use this when the caller asks for event location details, accessibility context, address confirmation, or directions and an Eventbrite venue_id is available from an event. Returns one venue at most; if not found, retrieve the event with venue expansion or ask the caller to confirm the event.",
+        "parameters": [
+          {
+            "name": "venue_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite venue ID from an event or search result.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested venue.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/organizers/{organizer_id}/": {
+      "get": {
+        "operationId": "get_organizer",
+        "summary": "Get Organizer",
+        "description": "Use this when the caller asks who is organizing an event, needs organizer profile details, or wants contact/context about the Eventbrite organizer and an organizer_id is available. Returns one organizer at most; if not found, retrieve the event with organizer expansion or ask the caller to confirm the event.",
+        "parameters": [
+          {
+            "name": "organizer_id",
+            "in": "path",
+            "required": true,
+            "description": "Required Eventbrite organizer ID from an event or search result.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested organizer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Eventbrite OAuth token, sent as `Authorization: Bearer <token>` (or as the `token` query parameter, per Eventbrite v3 API convention)."
+      }
+    }
+  }
+}
