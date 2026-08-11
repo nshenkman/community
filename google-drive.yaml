@@ -1,0 +1,1013 @@
+openapi: 3.0.3
+info:
+  title: Google Drive API — Files (list & get)
+  description: >-
+    Subset of the Google Drive API v3, converted from the Google API Discovery
+    document. Includes only the `files.list` and `files.get` operations, plus
+    the schemas they reference.
+  version: v3
+  contact:
+    name: Google
+    url: https://developers.google.com/workspace/drive/
+externalDocs:
+  url: https://developers.google.com/workspace/drive/
+servers:
+  - url: https://www.googleapis.com/drive/v3
+security:
+  - oauth2:
+      - https://www.googleapis.com/auth/drive
+tags:
+  - name: files
+    description: Google Drive files
+
+paths:
+  /files:
+    get:
+      operationId: drive.files.list
+      tags: [files]
+      summary: List the user's files
+      description: >-
+        Lists the user's files. Accepts the `q` parameter, a search query
+        combining one or more search terms. Returns *all* files by default,
+        including trashed files. Use `trashed=false` in `q` to exclude
+        trashed files.
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/drive
+            - https://www.googleapis.com/auth/drive.appdata
+            - https://www.googleapis.com/auth/drive.file
+            - https://www.googleapis.com/auth/drive.metadata
+            - https://www.googleapis.com/auth/drive.metadata.readonly
+            - https://www.googleapis.com/auth/drive.readonly
+      parameters:
+        - name: corpora
+          in: query
+          description: >-
+            Collection of items to which the query applies (`user`, `domain`,
+            `drive`, `allDrives`). Prefer `user` or `drive` over `allDrives`.
+          schema:
+            type: string
+        - name: corpus
+          in: query
+          deprecated: true
+          description: 'Deprecated: use `corpora` instead.'
+          schema:
+            type: string
+            enum: [domain, user]
+        - name: driveId
+          in: query
+          description: ID of the shared drive to search.
+          schema:
+            type: string
+        - name: includeItemsFromAllDrives
+          in: query
+          description: Whether both My Drive and shared drive items should be included.
+          schema:
+            type: boolean
+            default: false
+        - name: includeLabels
+          in: query
+          description: Comma-separated list of label IDs to include in `labelInfo`.
+          schema:
+            type: string
+        - name: includePermissionsForView
+          in: query
+          description: Additional view's permissions to include. Only `published` is supported.
+          schema:
+            type: string
+        - name: includeTeamDriveItems
+          in: query
+          deprecated: true
+          description: 'Deprecated: use `includeItemsFromAllDrives` instead.'
+          schema:
+            type: boolean
+            default: false
+        - name: orderBy
+          in: query
+          description: >-
+            Comma-separated list of sort keys, e.g.
+            `folder,modifiedTime desc,name`.
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          description: Maximum number of files to return (max 1000).
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: pageToken
+          in: query
+          description: Token continuing a previous list request.
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Query for filtering the file results.
+          schema:
+            type: string
+        - name: spaces
+          in: query
+          description: Comma-separated list of spaces to query (`drive`, `appDataFolder`).
+          schema:
+            type: string
+            default: drive
+        - name: supportsAllDrives
+          in: query
+          description: Whether the requesting application supports both My Drives and shared drives.
+          schema:
+            type: boolean
+            default: false
+        - name: supportsTeamDrives
+          in: query
+          deprecated: true
+          description: 'Deprecated: use `supportsAllDrives` instead.'
+          schema:
+            type: boolean
+            default: false
+        - name: teamDriveId
+          in: query
+          deprecated: true
+          description: 'Deprecated: use `driveId` instead.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileList'
+
+  /files/{fileId}:
+    get:
+      operationId: drive.files.get
+      tags: [files]
+      summary: Get a file's metadata or content by ID
+      description: >-
+        Gets a file's metadata or content by ID. If `alt=media` is provided,
+        the response includes the file contents in the response body.
+        Downloading content with `alt=media` only works for files stored in
+        Drive; use `files.export` for Google Docs, Sheets, and Slides.
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/drive
+            - https://www.googleapis.com/auth/drive.appdata
+            - https://www.googleapis.com/auth/drive.file
+            - https://www.googleapis.com/auth/drive.meet.readonly
+            - https://www.googleapis.com/auth/drive.metadata
+            - https://www.googleapis.com/auth/drive.metadata.readonly
+            - https://www.googleapis.com/auth/drive.photos.readonly
+            - https://www.googleapis.com/auth/drive.readonly
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          description: The ID of the file.
+          schema:
+            type: string
+        - name: acknowledgeAbuse
+          in: query
+          description: >-
+            Whether the user acknowledges the risk of downloading known
+            malware or other abusive files. Only applicable when `alt=media`.
+          schema:
+            type: boolean
+            default: false
+        - name: includeLabels
+          in: query
+          description: Comma-separated list of label IDs to include in `labelInfo`.
+          schema:
+            type: string
+        - name: includePermissionsForView
+          in: query
+          description: Additional view's permissions to include. Only `published` is supported.
+          schema:
+            type: string
+        - name: supportsAllDrives
+          in: query
+          description: Whether the requesting application supports both My Drives and shared drives.
+          schema:
+            type: boolean
+            default: false
+        - name: supportsTeamDrives
+          in: query
+          deprecated: true
+          description: 'Deprecated: use `supportsAllDrives` instead.'
+          schema:
+            type: boolean
+            default: false
+        - name: alt
+          in: query
+          description: Data format for the response, or `media` to download file content.
+          schema:
+            type: string
+            enum: [json, media]
+            default: json
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+            '*/*':
+              schema:
+                type: string
+                format: binary
+              description: Raw file bytes, returned when `alt=media`.
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          tokenUrl: https://oauth2.googleapis.com/token
+          scopes:
+            https://www.googleapis.com/auth/drive: See, edit, create, and delete all of your Google Drive files
+            https://www.googleapis.com/auth/drive.appdata: See, create, and delete its own configuration data in your Google Drive
+            https://www.googleapis.com/auth/drive.file: See, edit, create, and delete only the specific Google Drive files you use with this app
+            https://www.googleapis.com/auth/drive.meet.readonly: See and download your Google Drive files that were created or edited by Google Meet.
+            https://www.googleapis.com/auth/drive.metadata: View and manage metadata of files in your Google Drive
+            https://www.googleapis.com/auth/drive.metadata.readonly: See information about your Google Drive files
+            https://www.googleapis.com/auth/drive.photos.readonly: View the photos, videos and albums in your Google Photos
+            https://www.googleapis.com/auth/drive.readonly: See and download all your Google Drive files
+
+  parameters:
+    fields:
+      name: fields
+      in: query
+      description: Selector specifying which fields to include in a partial response.
+      schema:
+        type: s
+tring
+    quotaUser:
+      name: quotaUser
+      in: query
+      description: An arbitrary string tied to a user, for quota purposes.
+      schema:
+        type: string
+
+  schemas:
+    FileList:
+      type: object
+      description: A list of files.
+      properties:
+        kind:
+          type: string
+          description: 'Identifies what kind of resource this is. Value: `"drive#fileList"`.'
+          default: drive#fileList
+        nextPageToken:
+          type: string
+          description: >-
+            The page token for the next page of files. Absent if the end of
+            the list has been reached.
+        incompleteSearch:
+          type: boolean
+          description: Whether the search process was incomplete (some results may be missing).
+        files:
+          type: array
+          description: The list of files.
+          items:
+            $ref: '#/components/schemas/File'
+
+    File:
+      type: object
+      description: >-
+        The metadata for a file. Some resource methods (such as
+        `files.update`) require a `fileId`; use `files.list` to retrieve it.
+      properties:
+        kind:
+          type: string
+          readOnly: true
+          default: drive#file
+          description: 'Identifies what kind of resource this is. Value: `"drive#file"`.'
+        id:
+          type: string
+          description: The ID of the file.
+        name:
+          type: string
+          description: The name of the file. Not necessarily unique within a folder.
+        mimeType:
+          type: string
+          description: >-
+            The MIME type of the file. Auto-detected from uploaded content
+            if not provided. Cannot be changed unless a new revision is
+            uploaded.
+        description:
+          type: string
+          description: A short description of the file.
+        starred:
+          type: boolean
+          description: Whether the user has starred the file.
+        trashed:
+          type: boolean
+          description: >-
+            Whether the file has been trashed, explicitly or via a trashed
+            parent folder.
+        explicitlyTrashed:
+          type: boolean
+          readOnly: true
+          description: Whether the file was explicitly trashed (vs. recursively via a parent).
+        trashingUser:
+          $ref: '#/components/schemas/User'
+        trashedTime:
+          type: string
+          format: date-time
+          description: The time the item was trashed (RFC 3339). Only populated for shared drive items.
+        parents:
+          type: array
+          items:
+            type: string
+          description: >-
+            The ID of the parent folder. A file can only have one parent;
+            use `addParents`/`removeParents` on update to change it.
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+          description: Arbitrary key-value pairs visible to all apps.
+        appProperties:
+          type: object
+          additionalProperties:
+            type: string
+          description: Arbitrary key-value pairs private to the requesting app.
+        spaces:
+          type: array
+          readOnly: true
+          items:
+            type: string
+          description: 'Spaces containing the file: `drive`, `appDataFolder`, `photos`.'
+        version:
+          type: string
+          format: int64
+          readOnly: true
+          description: Monotonically increasing version number for the file.
+        webContentLink:
+          type: string
+          readOnly: true
+          description: A link for downloading the content of the file in a browser.
+        webViewLink:
+          type: string
+          readOnly: true
+          description: A link for opening the file in a relevant Google editor or viewer.
+        iconLink:
+          type: string
+          readOnly: true
+          description: A static, unauthenticated link to the file's icon.
+        hasThumbnail:
+          type: boolean
+          readOnly: true
+          description: Whether this file has a thumbnail.
+        thumbnailLink:
+          type: string
+          readOnly: true
+          description: A short-lived link to the file's thumbnail, if available.
+        thumbnailVersion:
+          type: string
+          format: int64
+          readOnly: true
+          description: The thumbnail version, for thumbnail cache invalidation.
+        viewedByMe:
+          type: boolean
+          readOnly: true
+          description: Whether the file has been viewed by this user.
+        viewedByMeTime:
+          type: string
+          format: date-time
+          description: The last time the file was viewed by the user (RFC 3339).
+        createdTime:
+          type: string
+          format: date-time
+          description: The time the file was created (RFC 3339).
+        modifiedTime:
+          type: string
+          format: date-time
+          description: >-
+            The last time the file was modified by anyone (RFC 3339). Also
+            updates `modifiedByMeTime` for the user when set.
+        modifiedByMe:
+          type: boolean
+          readOnly: true
+          description: Whether the file has been modified by this user.
+        modifiedByMeTime:
+          type: string
+          format: date-time
+          description: The last time the file was modified by the user (RFC 3339).
+        sharedWithMeTime:
+          type: string
+          format: date-time
+          description: The time the file was shared with the user, if applicable (RFC 3339).
+        sharingUser:
+          $ref: '#/components/schemas/User'
+        owners:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/User'
+          description: >-
+            The owner of this file. Not populated for items in shared
+            drives.
+        driveId:
+          type: string
+          readOnly: true
+          description: ID of the shared drive the file resides in.
+        teamDriveId:
+          type: string
+          readOnly: true
+          deprecated: true
+          description: 'Deprecated: use `driveId` instead.'
+        lastModifyingUser:
+          $ref: '#/components/schemas/User'
+        shared:
+          type: boolean
+          readOnly: true
+          description: Whether the file has been shared. Not populated for items in shared drives.
+        ownedByMe:
+          type: boolean
+          readOnly: true
+          description: Whether the user owns the file. Not populated for items in shared drives.
+        capabilities:
+          type: object
+          readOnly: true
+          description: Capabilities the current user has on this file.
+          properties:
+            canEdit:
+              type: boolean
+            canComment:
+              type: boolean
+            canShare:
+              type: boolean
+            canCopy:
+              type: boolean
+            canDelete:
+              type: boolean
+            canDownload:
+              type: boolean
+            canTrash:
+              type: boolean
+            canUntrash:
+              type: boolean
+            canRename:
+              type: boolean
+            canReadRevisions:
+              type: boolean
+            canAddChildren:
+              type: boolean
+            canListChildren:
+              type: boolean
+            canRemoveChildren:
+              type: boolean
+            canModifyContent:
+              type: boolean
+            canModifyLabels:
+              type: boolean
+            canReadLabels:
+              type: boolean
+        viewersCanCopyContent:
+          type: boolean
+          deprecated: true
+          description: 'Deprecated: use `copyRequiresWriterPermission` instead.'
+        copyRequiresWriterPermission:
+          type: boolean
+          description: >-
+            Whether copy, print, or download should be disabled for readers
+            and commenters.
+        writersCanShare:
+          type: boolean
+          description: >-
+            Whether users with only `writer` permission can modify the
+            file's permissions. Not populated for shared drive items.
+        permissions:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/Permission'
+          description: >-
+            The full list of permissions for the file. Only available if
+            the requesting user can share the file; not populated for
+            shared drive items.
+        permissionIds:
+          type: array
+          readOnly: true
+          items:
+            type: string
+          description: List of permission IDs for users with access to this file.
+        hasAugmentedPermissions:
+          type: boolean
+          readOnly: true
+          description: >-
+            Whether there are permissions directly on this file. Only
+            populated for items in shared drives.
+        inheritedPermissionsDisabled:
+          type: boolean
+          description: Whether this file has inherited permissions disabled.
+        folderColorRgb:
+          type: string
+          description: >-
+            Color for a folder or shortcut to a folder as an RGB hex
+            string. Falls back to the closest palette color if unsupported.
+        originalFilename:
+          type: string
+          description: >-
+            The original filename of the uploaded content, or the original
+            `name`. Only for files with binary content.
+        fullFileExtension:
+          type: string
+          description: >-
+            Full file extension extracted from `name` (may be a
+            concatenation, e.g. "tar.gz"). Only for binary-content files.
+        fileExtension:
+          type: string
+          readOnly: true
+          description: The final component of `fullFileExtension`.
+        md5Checksum:
+          type: string
+          readOnly: true
+          description: The MD5 checksum for the file's content, if applicable.
+        sha1Checksum:
+          type: string
+          readOnly: true
+          description: The SHA1 checksum for the file's content, if available.
+        sha256Checksum:
+          type: string
+          readOnly: true
+          description: The SHA256 checksum for the file's content, if available.
+        size:
+          type: string
+          format: int64
+          readOnly: true
+          description: >-
+            Size in bytes of blobs and Google Workspace editor files. Not
+            populated for files with no size, like shortcuts and folders.
+        quotaBytesUsed:
+          type: string
+          format: int64
+          readOnly: true
+          description: Number of storage quota bytes used by the file.
+        headRevisionId:
+          type: string
+          readOnly: true
+          description: >-
+            ID of the file's head revision. Only available for files with
+            binary content.
+        contentHints:
+          type: object
+          description: >-
+            Additional information about the file's content. Never
+            populated in responses.
+          properties:
+            indexableText:
+              type: string
+              description: Text to index to improve fullText queries (max 128 KB).
+            thumbnail:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: byte
+                  description: URL-safe Base64 encoded thumbnail data.
+                mimeType:
+                  type: string
+                  description: The MIME type of the thumbnail.
+        contentRestrictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentRestriction'
+          description: Restrictions for accessing the file's content, if any exist.
+        downloadRestrictions:
+          $ref: '#/components/schemas/DownloadRestrictionsMetadata'
+        resourceKey:
+          type: string
+          readOnly: true
+          description: A key needed to access the item via a shared link.
+        isAppAuthorized:
+          type: boolean
+          readOnly: true
+          description: Whether the file was created or opened by the requesting app.
+        exportLinks:
+          type: object
+          readOnly: true
+          additionalProperties:
+            type: string
+          description: Links for exporting Docs Editors files to specific formats.
+        shortcutDetails:
+          type: object
+          description: Information about a shortcut file.
+          properties:
+            targetId:
+              type: string
+              description: ID of the file this shortcut points to. Settable only on create.
+            targetMimeType:
+              type: string
+              description: MIME type of the target, snapshotted at shortcut creation time.
+            targetResourceKey:
+              type: string
+              description: The `resourceKey` for the target file.
+        clientEncryptionDetails:
+          $ref: '#/components/schemas/ClientEncryptionDetails'
+        imageMediaMetadata:
+          type: object
+          readOnly: true
+          description: Additional metadata about image media, if available.
+          properties:
+            width:
+              type: integer
+              format: int32
+            height:
+              type: integer
+              format: int32
+            rotation:
+              type: integer
+              format: int32
+            location:
+              type: object
+              properties:
+                latitude:
+                  type: number
+                  format: double
+                longitude:
+                  type: number
+                  format: double
+                altitude:
+                  type: number
+                  format: double
+            time:
+              type: string
+            cameraMake:
+              type: string
+            cameraModel:
+              type: string
+            exposureTime:
+              type: number
+              format: float
+            aperture:
+              type: number
+              format: float
+            flashUsed:
+              type: boolean
+            focalLength:
+              type: number
+              format: float
+            isoSpeed:
+              type: integer
+              format: int32
+            meteringMode:
+              type: string
+            sensor:
+              type: string
+            exposureMode:
+              type: string
+            colorSpace:
+              type: string
+            whiteBalance:
+              type: string
+            exposureBias:
+              type: number
+              format: float
+            maxApertureValue:
+              type: number
+              format: float
+            subjectDistance:
+              type: integer
+              format: int32
+            lens:
+              type: string
+        videoMediaMetadata:
+          type: object
+          readOnly: true
+          description: >-
+            Additional metadata about video media; may not be available
+            immediately upon upload.
+          properties:
+            width:
+              type: integer
+              format: int32
+            height:
+              type: integer
+              format: int32
+            durationMillis:
+              type: string
+              format: int64
+        labelInfo:
+          type: object
+          description: Label information on the file.
+          properties:
+            labels:
+              type: array
+              readOnly: true
+              items:
+                $ref: '#/components/schemas/Label'
+              description: >-
+                Labels on the file as requested via `includeLabels`. Empty
+                by default.
+        linkShareMetadata:
+          type: object
+          description: Details about the link URLs clients use to refer to this item.
+          properties:
+            securityUpdateEligible:
+              type: boolean
+              readOnly: true
+            securityUpdateEnabled:
+              type: boolean
+              readOnly: true
+
+    User:
+      type: object
+      description: Information about a Drive user.
+      properties:
+        kind:
+          type: string
+          readOnly: true
+          default: drive#user
+          description: 'Identifies what kind of resource this is. Value: `drive#user`.'
+        displayName:
+          type: string
+          readOnly: true
+          description: A plain text displayable name for this user.
+        photoLink:
+          type: string
+          readOnly: true
+          description: A link to the user's profile photo, if available.
+        me:
+          type: boolean
+          readOnly: true
+          description: Whether this user is the requesting user.
+        permissionId:
+          type: string
+          readOnly: true
+          description: The user's ID as visible in Permission resources.
+        emailAddress:
+          type: string
+          readOnly: true
+          description: >-
+            The email address of the user. May be absent if the user hasn't
+            made it visible to the requester.
+
+    Permission:
+      type: object
+      description: >-
+        A permission for a file. Grants a user, group, domain, or the world
+        access to a file or folder hierarchy.
+      properties:
+        kind:
+          type: string
+          readOnly: true
+          default: drive#permission
+          description: 'Identifies what kind of resource this is. Value: `"drive#permission"`.'
+        id:
+          type: string
+          readOnly: true
+          description: The ID of this permission.
+        type:
+          type: string
+          description: 'The type of the grantee: `user`, `group`, `domain`, or `anyone`.'
+        emailAddress:
+          type: string
+          readOnly: true
+          description: The email address of the user or group this permission refers to.
+        domain:
+          type: string
+          readOnly: true
+          description: The domain this permission refers to.
+        role:
+          type: string
+          description: >-
+            The role granted: `owner`, `organizer`, `fileOrganizer`,
+            `writer`, `commenter`, `reader`.
+        view:
+          type: string
+          description: >-
+            The view this permission belongs to (`published` or
+            `metadata`), if any.
+        allowFileDiscovery:
+          type: boolean
+          description: >-
+            Whether the file can be discovered through search. Only
+            applicable to `domain` or `anyone` permissions.
+        displayName:
+          type: string
+          readOnly: true
+          description: The "pretty" name of the value of the permission.
+        photoLink:
+          type: string
+          readOnly: true
+          description: A link to the user's profile photo, if available.
+        expirationTime:
+          type: string
+          format: date-time
+          description: >-
+            When this permission expires (RFC 3339). Only settable on user
+            and group permissions; must be in the future, within one year.
+        deleted:
+          type: boolean
+          readOnly: true
+          description: >-
+            Whether the account associated with this permission has been
+            deleted. Only for `user` or `group` permissions.
+        pendingOwner:
+          type: boolean
+          description: >-
+            Whether the account associated with this permission is a
+            pending owner. Only for `user` permissions on non-shared-drive
+            files.
+        inheritedPermissionsDisabled:
+          type: boolean
+          description: >-
+            When true, only organizers, owners, and users with direct
+            permissions can access the item.
+        permissionDetails:
+          type: array
+          readOnly: true
+          description: Details of whether permissions on this item are inherited.
+          items:
+            type: object
+            properties:
+              permissionType:
+                type: string
+                description: 'The permission type for this user: `file` or `member`.'
+              role:
+                type: string
+                description: The primary role for this user.
+              inherited:
+                type: boolean
+              inheritedFrom:
+                type: string
+                description: ID of the item this permission is inherited from.
+
+    ContentRestriction:
+      type: object
+      description: A restriction for accessing the content of the file.
+      properties:
+        readOnly:
+          type: boolean
+          description: >-
+            Whether the file's content is read-only. If true, no new
+            revision, comment, or title change may be made.
+        reason:
+          type: string
+          description: >-
+            Reason the content is restricted. Only mutable alongside
+            `readOnly=true`.
+        restrictingUser:
+          $ref: '#/components/schemas/User'
+        restrictionTime:
+          type: string
+          format: date-time
+          description: When the content restriction was set (RFC 3339). Only if `readOnly=true`.
+        type:
+          type: string
+          readOnly: true
+          description: 'The type of restriction. Currently only `globalContentRestriction`.'
+        ownerRestricted:
+          type: boolean
+          description: >-
+            Whether only the file owner (or an organizer, for shared drive
+            items) can modify or remove this restriction.
+        systemRestricted:
+          type: boolean
+          readOnly: true
+          description: >-
+            Whether the restriction was applied by the system (e.g. an
+            esignature). Users cannot modify these.
+
+    DownloadRestriction:
+      type: object
+      description: A restriction for copy and download of the file.
+      properties:
+        restrictedForReaders:
+          type: boolean
+          description: Whether download and copy is restricted for readers.
+        restrictedForWriters:
+          type: boolean
+          description: >-
+            Whether download and copy is restricted for writers. If true,
+            download is also restricted for readers.
+
+    DownloadRestrictionsMetadata:
+      type: object
+      description: Download restrictions applied to the file.
+      properties:
+        itemDownloadRestriction:
+          allOf:
+            - $ref: '#/components/schemas/DownloadRestriction'
+          description: >-
+            The download restriction applied directly by the owner or
+            organizer. Doesn't account for shared drive settings or DLP
+            rules.
+        effectiveDownloadRestrictionWithContext:
+          allOf:
+            - $ref: '#/components/schemas/DownloadRestriction'
+          description: >-
+            The effective download restriction, considering all
+            restriction settings and DLP rules.
+          readOnly: true
+
+    Label:
+      type: object
+      description: Representation of label and label fields.
+      properties:
+        kind:
+          type: string
+          description: This is always `drive#label`.
+        id:
+          type: string
+          description: The ID of the label.
+        revisionId:
+          type: string
+          description: The revision ID of the label.
+        fields:
+          type: object
+          description: A map of the fields on the label, keyed by field ID.
+          additionalProperties:
+            $ref: '#/components/schemas/LabelField'
+
+    LabelField:
+      type: object
+      description: Representation of a field, a typed key-value pair.
+      properties:
+        kind:
+          type: string
+          description: This is always `drive#labelField`.
+        id:
+          type: string
+          description: The identifier of this label field.
+        valueType:
+          type: string
+          description: >-
+            The field type: `dateString`, `integer`, `selection`, `text`,
+            or `user`.
+        text:
+          type: array
+          items:
+            type: string
+          description: Only present if `valueType` is `text`.
+        integer:
+          type: array
+          items:
+            type: string
+            format: int64
+          description: Only present if `valueType` is `integer`.
+        dateString:
+          type: array
+          items:
+            type: string
+            format: date
+          description: 'Only present if `valueType` is `dateString`. RFC 3339 date: YYYY-MM-DD.'
+        user:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          description: Only present if `valueType` is `user`.
+        selection:
+          type: array
+          items:
+            type: string
+          description: Only present if `valueType` is `selection`.
+
+    ClientEncryptionDetails:
+      type: object
+      description: Details about the client-side encryption applied to the file.
+      properties:
+        encryptionState:
+          type: string
+          description: 'The encryption state of the file: `encrypted` or `unencrypted`.'
+        decryptionMetadata:
+          $ref: '#/components/schemas/DecryptionMetadata'
+
+    DecryptionMetadata:
+      type: object
+      description: Representation of the CSE DecryptionMetadata.
+      properties:
+        wrappedKey:
+          type: string
+          description: >-
+            URL-safe Base64 encoded wrapped key used to encrypt the file's
+            contents.
+        encryptionResourceKeyHash:
+          type: string
+          description: >-
+            URL-safe Base64 encoded HMAC-SHA256 digest of the resource
+            metadata with its DEK.
+        kaclsId:
+          type: string
+          format: int64
+          description: The ID of the KACLS (Key ACL Service) used to encrypt the file.
+        kaclsName:
+          type: string
+          description: The name of the KACLS used to encrypt the file.
+        jwt:
+          type: string
+          description: >-
+            Signed JWT authorizing the requesting user with the KACLS,
+            asserting at least read access to the file.
+        keyFormat:
+          type: string
+          description: 'Key format for the unwrapped key. Must be `tinkAesGcmKey`.'
+        aes256GcmChunkSize:
+          type: string
+          description: 'Chunk size for AES 256 GCM encrypted content: `default` or `small`.'
