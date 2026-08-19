@@ -1,0 +1,937 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "V-Parking AI Voice & Messaging Agent API",
+    "description": "API used by Aircall's AI Voice Agent (phone calls) and AI Messaging Agent (SMS / WhatsApp) to search parking sites, validate visitor fields, and register visitor licence plates for V-Parking multi-residential communities. Scope is limited to `/api/v1/voice-agent/*` plus the login endpoint used to obtain the agent's Bearer token. No other V-Parking product APIs, mobile CRM APIs, or website flows are covered.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "V-Parking Operations",
+      "email": "info@vparking.ca",
+      "url": "https://vparking.ca/"
+    },
+    "x-document-control": {
+      "document": "VParking-Aircall-Voice-Agent-Partner-Guide",
+      "documentDate": "2026-08-13",
+      "classification": "Confidential \u2014 for Aircall implementation & V-Parking ops only"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://projectiv.in/vparking/api/v1",
+      "description": "Test / staging (current) \u2014 swap host to vparking.ca at go-live"
+    },
+    {
+      "url": "https://vparking.ca/api/v1",
+      "description": "Production (after UAT) \u2014 identical paths, host only changes"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Obtain the Bearer token used by the Voice Agent tools."
+    },
+    {
+      "name": "Voice Agent",
+      "description": "Tools called by the Aircall AI Voice / Messaging Agent."
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": [],
+      "voiceAgentApiKey": []
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login (obtain Voice Agent Bearer token)",
+        "description": "Setup / token refresh only \u2014 not a per-call Voice Agent tool. Uses a dedicated `vagent` role account with no CRM assignable/parent scope; only search / check / register tools are permitted.\n",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "email": "vagent@vparking.local",
+                "password": "[PROVIDED SECURELY]"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "token": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                    "token_type": "Bearer",
+                    "user": {
+                      "email": "vagent@vparking.local",
+                      "role": "vagent"
+                    },
+                    "voice_agent_only": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voice-agent/health": {
+      "post": {
+        "tags": [
+          "Voice Agent"
+        ],
+        "summary": "Health / connection check",
+        "description": "Call after auth setup or the first Custom Action test to confirm dual auth (Bearer + X-Voice-Agent-Key) wiring.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthRequest"
+              },
+              "example": {
+                "conversation_channel": "voice"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentResponseEnvelope"
+                },
+                "example": {
+                  "success": true,
+                  "code": "OK",
+                  "agent_message": "Connected.",
+                  "next_step": "ask_lot",
+                  "data": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "503": {
+            "$ref": "#/components/responses/ApiKeyNotConfigured"
+          }
+        }
+      }
+    },
+    "/voice-agent/search-lot": {
+      "post": {
+        "tags": [
+          "Voice Agent"
+        ],
+        "summary": "Search parking site by lot number",
+        "description": "Used when the customer knows the parking lot number (from signage or a prior visit).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchLotRequest"
+              },
+              "example": {
+                "lot_no": "LOT001",
+                "conversation_channel": "voice",
+                "aircall_call_id": "987654"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/voice-agent/search-building": {
+      "post": {
+        "tags": [
+          "Voice Agent"
+        ],
+        "summary": "Search parking site by building name / address",
+        "description": "Used when the customer does not know the lot number but has a building name, street, or postal code. Returns the same result codes as search-lot (NOT_FOUND, SITE_CLOSED, OK, OK_MULTI, NOT_ASSIGNED_TO_SUPPORT).\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchBuildingRequest"
+              },
+              "example": {
+                "query": "Maple Tower",
+                "conversation_channel": "sms"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/voice-agent/check-field": {
+      "post": {
+        "tags": [
+          "Voice Agent"
+        ],
+        "summary": "Check a single field (plate / phone / unit / security code)",
+        "description": "Called after each customer answer \u2014 like a web form's on-blur validation \u2014 not only at the end of the conversation.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckFieldRequest"
+              },
+              "example": {
+                "parking_site_id": 1,
+                "field": "licence_plate",
+                "value": "ABC123",
+                "conversation_channel": "voice"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Field check result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentResponseEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/voice-agent/check-plate": {
+      "post": {
+        "tags": [
+          "Voice Agent"
+        ],
+        "summary": "Check licence plate (blacklist + already-active preview)",
+        "description": "Optional dedicated plate check, separate from the generic check-field call.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckPlateRequest"
+              },
+              "example": {
+                "parking_site_id": 1,
+                "licence_plate": "ABC123",
+                "conversation_channel": "voice"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plate check result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentResponseEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/voice-agent/validate": {
+      "post": {
+        "tags": [
+          "Voice Agent"
+        ],
+        "summary": "Validate registration (dry-run, no DB insert)",
+        "description": "Optional step before the final confirmation. Accepts the same body as `register` but does not create a registration record.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentResponseEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/voice-agent/register": {
+      "post": {
+        "tags": [
+          "Voice Agent"
+        ],
+        "summary": "Register a visitor licence plate (final \u2014 Support Desk parity)",
+        "description": "Call only after the customer has confirmed the full summary (and, for a re-register, only after the customer has said YES). On success, `data.copy_message` / `agent_message_sms` return the fixed `PARK Lot \u2026` confirmation text, which must be spoken/sent verbatim.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "example": {
+                "parking_site_id": 1,
+                "licence_plate": "ABC123",
+                "unit_number": "101",
+                "phone": "14035550123",
+                "security_code": "1234",
+                "hours": 12,
+                "notify_preference": "contact",
+                "conversation_channel": "voice",
+                "is_bypass": false,
+                "aircall_call_id": "987654",
+                "ai_voice_agent_session_id": "sess_abc"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registration successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                },
+                "example": {
+                  "success": true,
+                  "code": "OK",
+                  "agent_message": "PARK Lot LOT001: Plate ABC123 registered for 12 hr. Start: 13 Aug 2026 10:00 AM. Ends: 13 Aug 2026 10:00 PM. V-Parking. Do not reply. A confirmation text is being sent.",
+                  "agent_message_sms": "PARK Lot LOT001: Plate ABC123 registered for 12 hr. Start: 13 Aug 2026 10:00 AM. Ends: 13 Aug 2026 10:00 PM. V-Parking. Do not reply.",
+                  "next_step": "end",
+                  "data": {
+                    "booking_type": "call",
+                    "copy_message": "PARK Lot LOT001: Plate ABC123 registered for 12 hr. Start: 13 Aug 2026 10:00 AM. Ends: 13 Aug 2026 10:00 PM. V-Parking. Do not reply.",
+                    "visitor_sms_format": "PARK_LOT_FIXED"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "Conflict \u2014 plate already has an active registration (`ALREADY_ACTIVE`). Re-call with `is_bypass: true` only after the customer explicitly says YES to re-register.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentResponseEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Sanctum Bearer token obtained from `/auth/login` (`data.token`). Required on every `/voice-agent/*` call.\n"
+      },
+      "voiceAgentApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Voice-Agent-Key",
+        "description": "Server-configured `VOICE_AGENT_API_KEY`, sent on every `/voice-agent/*` call alongside the Bearer token.\n"
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "description": "Recommended on register calls. Reuse the same key if the Aircall Action retries, to prevent a double registration / double SMS.\n",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing or wrong Bearer token, or wrong X-Voice-Agent-Key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Role/permission blocked \u2014 escalate and notify V-Parking ops",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ApiKeyNotConfigured": {
+        "description": "VOICE_AGENT_API_KEY not configured on the server \u2014 ops must set it",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ConversationChannel": {
+        "type": "string",
+        "enum": [
+          "voice",
+          "sms"
+        ],
+        "description": "Derived from the active Aircall product \u2014 never asked of the customer. `voice` \u2192 AI Voice Agent (booking_type `call`); `sms` \u2192 AI Messaging Agent / WhatsApp (booking_type `sms`).\n"
+      },
+      "BookingType": {
+        "type": "string",
+        "enum": [
+          "call",
+          "sms"
+        ]
+      },
+      "ResponseCode": {
+        "type": "string",
+        "description": "Business result code returned by every Voice Agent tool.",
+        "enum": [
+          "OK",
+          "OK_MULTI",
+          "NOT_FOUND",
+          "VALIDATION_ERROR",
+          "SITE_CLOSED",
+          "NOT_ASSIGNED_TO_SUPPORT",
+          "BLACKLISTED",
+          "LIMIT_REACHED",
+          "ALREADY_ACTIVE",
+          "INVALID_SECURITY"
+        ]
+      },
+      "NextStep": {
+        "type": "string",
+        "description": "Tells the agent what to ask or do next.",
+        "enum": [
+          "ask_lot",
+          "ask_building",
+          "ask_which_site",
+          "ask_plate",
+          "ask_phone",
+          "ask_unit",
+          "ask_security",
+          "ask_reregister",
+          "confirm_register",
+          "escalate",
+          "end"
+        ]
+      },
+      "RequestMeta": {
+        "type": "object",
+        "description": "Optional metadata recommended on requests for audit purposes.",
+        "properties": {
+          "conversation_channel": {
+            "$ref": "#/components/schemas/ConversationChannel"
+          },
+          "aircall_call_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "123456"
+          },
+          "aircall_message_id": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "ai_voice_agent_session_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "sess_abc"
+          },
+          "from_phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+17805550100"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "vagent@vparking.local"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "[PROVIDED SECURELY]"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string",
+                "description": "Sanctum Bearer token \u2014 store in the Aircall Auth Method.",
+                "example": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              },
+              "token_type": {
+                "type": "string",
+                "example": "Bearer"
+              },
+              "user": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "vagent@vparking.local"
+                  },
+                  "role": {
+                    "type": "string",
+                    "example": "vagent"
+                  }
+                }
+              },
+              "voice_agent_only": {
+                "type": "boolean",
+                "example": true,
+                "description": "No `modules`, `scope`, `assignable_roles`, or CRM parent tree is returned for this role.\n"
+              }
+            }
+          }
+        }
+      },
+      "AgentResponseEnvelope": {
+        "type": "object",
+        "description": "Standard response shape returned by every Voice Agent tool.",
+        "required": [
+          "success",
+          "code",
+          "agent_message",
+          "next_step"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "$ref": "#/components/schemas/ResponseCode"
+          },
+          "agent_message": {
+            "type": "string",
+            "description": "Speak this on the call, or use as default reply text. Must not be paraphrased."
+          },
+          "agent_message_sms": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional shorter SMS variant \u2014 preferred over agent_message on the SMS channel."
+          },
+          "next_step": {
+            "$ref": "#/components/schemas/NextStep"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "HealthRequest": {
+        "type": "object",
+        "required": [
+          "conversation_channel"
+        ],
+        "properties": {
+          "conversation_channel": {
+            "$ref": "#/components/schemas/ConversationChannel"
+          }
+        }
+      },
+      "Site": {
+        "type": "object",
+        "description": "A matched parking site, returned by search-lot / search-building.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "lot_no": {
+            "type": "string",
+            "example": "LOT001"
+          },
+          "building_name": {
+            "type": "string",
+            "example": "Maple Tower"
+          },
+          "hours_limit": {
+            "type": "integer",
+            "description": "Default / maximum visitor parking hours for this site.",
+            "example": 12
+          },
+          "security_required": {
+            "type": "boolean"
+          },
+          "unit_number_enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SearchLotRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RequestMeta"
+          },
+          {
+            "type": "object",
+            "required": [
+              "lot_no",
+              "conversation_channel"
+            ],
+            "properties": {
+              "lot_no": {
+                "type": "string",
+                "example": "LOT001"
+              }
+            }
+          }
+        ]
+      },
+      "SearchBuildingRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RequestMeta"
+          },
+          {
+            "type": "object",
+            "required": [
+              "query",
+              "conversation_channel"
+            ],
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Building name, street address, or postal code.",
+                "example": "Maple Tower"
+              }
+            }
+          }
+        ]
+      },
+      "SearchResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AgentResponseEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "sites": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Site"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CheckFieldRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RequestMeta"
+          },
+          {
+            "type": "object",
+            "required": [
+              "parking_site_id",
+              "field",
+              "value",
+              "conversation_channel"
+            ],
+            "properties": {
+              "parking_site_id": {
+                "type": "integer",
+                "description": "From the search response's sites[].id.",
+                "example": 1
+              },
+              "field": {
+                "type": "string",
+                "enum": [
+                  "licence_plate",
+                  "phone",
+                  "unit_number",
+                  "security_code"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "example": "ABC123"
+              }
+            }
+          }
+        ]
+      },
+      "CheckPlateRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RequestMeta"
+          },
+          {
+            "type": "object",
+            "required": [
+              "parking_site_id",
+              "licence_plate",
+              "conversation_channel"
+            ],
+            "properties": {
+              "parking_site_id": {
+                "type": "integer",
+                "example": 1
+              },
+              "licence_plate": {
+                "type": "string",
+                "example": "ABC123"
+              }
+            }
+          }
+        ]
+      },
+      "RegisterRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RequestMeta"
+          },
+          {
+            "type": "object",
+            "required": [
+              "parking_site_id",
+              "licence_plate",
+              "notify_preference",
+              "conversation_channel"
+            ],
+            "properties": {
+              "parking_site_id": {
+                "type": "integer",
+                "description": "From search sites[].id.",
+                "example": 1
+              },
+              "licence_plate": {
+                "type": "string",
+                "description": "Exact plate \u2014 must not be \"corrected\" without customer confirmation.",
+                "example": "ABC123"
+              },
+              "unit_number": {
+                "type": "string",
+                "description": "Required when the site's unit_number_enabled is true.",
+                "example": "101"
+              },
+              "phone": {
+                "type": "string",
+                "description": "10\u201315 digits. Preferred field; on SMS may be prefilled from from_phone.\n",
+                "example": "14035550123"
+              },
+              "security_code": {
+                "type": "string",
+                "description": "Required when the site's security_required is true.",
+                "example": "1234"
+              },
+              "hours": {
+                "type": "integer",
+                "description": "Optional. Defaults to the site's hours_limit. Must never exceed the site limit.\n",
+                "example": 12
+              },
+              "notify_preference": {
+                "type": "string",
+                "description": "Usually \"contact\".",
+                "example": "contact"
+              },
+              "is_bypass": {
+                "type": "boolean",
+                "default": false,
+                "description": "Set true only after the customer has clearly said YES to re-register an already-active plate.\n",
+                "example": false
+              }
+            }
+          }
+        ]
+      },
+      "RegisterResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AgentResponseEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "booking_type": {
+                    "$ref": "#/components/schemas/BookingType"
+                  },
+                  "copy_message": {
+                    "type": "string",
+                    "description": "Fixed \"PARK Lot \u2026\" confirmation text, identical to agent_message_sms on a successful register.\n"
+                  },
+                  "visitor_sms_format": {
+                    "type": "string",
+                    "enum": [
+                      "PARK_LOT_FIXED"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "code": {
+            "type": "string",
+            "example": "UNAUTHORIZED"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
