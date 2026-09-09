@@ -1,10 +1,10 @@
-FROM golang:bullseye
+FROM golang:bookworm
 
 ENV WEBP_VERSION libwebp-1.2.2-rc1
 
 ENV REPO=$GOPATH/src/github.com/tidbyt/pixlet
 
-RUN apt-get -o Acquire::Check-Valid-Until=false update \
+RUN apt-get update \
     && apt-get install -y ca-certificates tzdata openssl libwebp-dev bash
 
 RUN git clone -b v0.22.8 https://github.com/tidbyt/pixlet.git $REPO && cd $REPO && make build
